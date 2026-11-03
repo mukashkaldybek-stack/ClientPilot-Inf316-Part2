@@ -1,0 +1,681 @@
+openapi: 3.0.3
+info:
+  title: ClientPilot Micro-SaaS API
+  description: Autonomous REST API for freelancers managing clients, projects, time tracking, and invoice generation.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Local Unified Development Server
+  - url: http://localhost:4000
+    description: Standalone Hono API Server
+
+paths:
+  /api/health:
+    get:
+      summary: Health check endpoint
+      description: Returns the health and readiness status of the backend API and database connection.
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+                  database:
+                    type: string
+                    example: connected
+
+  /api/clients:
+    get:
+      summary: List all clients
+      description: Retrieves all active clients for the current user.
+      responses:
+        '200':
+          description: A list of clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Client'
+    post:
+      summary: Create a new client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClientDto'
+      responses:
+        '201':
+          description: Client created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '400':
+          description: Bad request (missing required fields)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/clients/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get client by ID
+      responses:
+        '200':
+          description: Client details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '404':
+          description: Client not found
+    put:
+      summary: Update an existing client
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateClientDto'
+      responses:
+        '200':
+          description: Client updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+        '404':
+          description: Client not found
+    delete:
+      summary: Delete a client
+      responses:
+        '200':
+          description: Client deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '404':
+          description: Client not found
+
+  /api/projects:
+    get:
+      summary: List all projects
+      parameters:
+        - name: clientId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+    post:
+      summary: Create a new project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateProjectDto'
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '400':
+          description: Missing required fields
+        '404':
+          description: Associated client does not exist
+
+  /api/projects/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get project by ID
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          description: Project not found
+    put:
+      summary: Update project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProjectDto'
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '404':
+          description: Project not found
+    delete:
+      summary: Delete project
+      responses:
+        '200':
+          description: Project deleted
+
+  /api/timers:
+    get:
+      summary: List all time entries
+      parameters:
+        - name: projectId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: isBilled
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of time entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TimeEntry'
+
+  /api/timers/active:
+    get:
+      summary: Get currently running timer
+      responses:
+        '200':
+          description: Active timer or null if none running
+          content:
+            application/json:
+              schema:
+                type: object
+                nullable: true
+                properties:
+                  activeTimer:
+                    $ref: '#/components/schemas/TimeEntry'
+
+  /api/timers/start:
+    post:
+      summary: Start a new timer
+      description: Starts a new time tracker. Requires projectId. If projectId is missing or invalid, must strictly return 422.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartTimerDto'
+      responses:
+        '201':
+          description: Timer started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeEntry'
+        '422':
+          description: Unprocessable Entity - projectId is missing or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /api/timers/{id}/stop:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    post:
+      summary: Stop a running timer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Timer stopped
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TimeEntry'
+        '404':
+          description: Timer entry not found
+        '400':
+          description: Timer already stopped
+
+  /api/timers/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    delete:
+      summary: Delete time entry
+      responses:
+        '200':
+          description: Time entry deleted
+
+  /api/invoices:
+    get:
+      summary: List all invoices
+      parameters:
+        - name: clientId
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invoice'
+
+  /api/invoices/generate:
+    post:
+      summary: Generate an invoice from tracked billable time
+      description: Aggregates unbilled time entries for a client, computes line items, sanitizes special characters (é, &, <, >), and generates a new invoice.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateInvoiceDto'
+      responses:
+        '201':
+          description: Invoice successfully generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '400':
+          description: Invalid request or no billable hours available
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Client not found
+
+  /api/invoices/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      summary: Get invoice by ID with line items
+      responses:
+        '200':
+          description: Complete invoice details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '404':
+          description: Invoice not found
+
+  /api/invoices/{id}/status:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    put:
+      summary: Update invoice status (e.g. draft, sent, paid)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [draft, sent, paid, cancelled]
+      responses:
+        '200':
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+
+components:
+  schemas:
+    Client:
+      type: object
+      required: [id, name, email, hourlyRate, currency, createdAt]
+      properties:
+        id:
+          type: string
+          example: clnt_9f83a21b
+        name:
+          type: string
+          example: Acme Corp & Co.
+        email:
+          type: string
+          format: email
+          example: billing@acme.com
+        hourlyRate:
+          type: number
+          example: 120.0
+        currency:
+          type: string
+          example: USD
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateClientDto:
+      type: object
+      required: [name, email, hourlyRate]
+      properties:
+        name:
+          type: string
+          example: René & Société
+        email:
+          type: string
+          format: email
+          example: rene@societe.fr
+        hourlyRate:
+          type: number
+          example: 95.0
+        currency:
+          type: string
+          default: USD
+          example: EUR
+
+    UpdateClientDto:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        hourlyRate:
+          type: number
+        currency:
+          type: string
+
+    Project:
+      type: object
+      required: [id, clientId, name, status, createdAt]
+      properties:
+        id:
+          type: string
+          example: proj_4a5b6c7d
+        clientId:
+          type: string
+          example: clnt_9f83a21b
+        clientName:
+          type: string
+          example: Acme Corp & Co.
+        name:
+          type: string
+          example: Mobile App Redesign
+        description:
+          type: string
+          example: Full redesign with Figma & React Native
+        status:
+          type: string
+          enum: [active, completed, on_hold]
+          example: active
+        budgetHours:
+          type: number
+          example: 40.0
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateProjectDto:
+      type: object
+      required: [clientId, name]
+      properties:
+        clientId:
+          type: string
+          example: clnt_9f83a21b
+        name:
+          type: string
+          example: E-commerce Checkout Optimization
+        description:
+          type: string
+          example: Optimization sprint
+        status:
+          type: string
+          default: active
+          enum: [active, completed, on_hold]
+        budgetHours:
+          type: number
+          default: 0
+
+    UpdateProjectDto:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, completed, on_hold]
+        budgetHours:
+          type: number
+
+    TimeEntry:
+      type: object
+      required: [id, projectId, startTime, isBilled]
+      properties:
+        id:
+          type: string
+          example: time_1a2b3c4d
+        projectId:
+          type: string
+          example: proj_4a5b6c7d
+        projectName:
+          type: string
+          example: Mobile App Redesign
+        clientName:
+          type: string
+          example: Acme Corp & Co.
+        description:
+          type: string
+          example: Implementing user authentication flow
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+        durationSeconds:
+          type: integer
+          example: 3600
+        isBilled:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+
+    StartTimerDto:
+      type: object
+      required: [projectId]
+      properties:
+        projectId:
+          type: string
+          example: proj_4a5b6c7d
+        description:
+          type: string
+          example: Frontend bug fixes & styling
+
+    Invoice:
+      type: object
+      required: [id, invoiceNumber, clientId, issueDate, dueDate, status, subtotal, taxRate, totalAmount, items]
+      properties:
+        id:
+          type: string
+          example: inv_001a
+        invoiceNumber:
+          type: string
+          example: INV-2026-001
+        clientId:
+          type: string
+          example: clnt_9f83a21b
+        clientName:
+          type: string
+          example: Acme Corp & Co.
+        clientEmail:
+          type: string
+          example: billing@acme.com
+        issueDate:
+          type: string
+          format: date
+          example: 2026-11-03
+        dueDate:
+          type: string
+          format: date
+          example: 2026-11-17
+        status:
+          type: string
+          enum: [draft, sent, paid, cancelled]
+          example: draft
+        subtotal:
+          type: number
+          example: 1200.00
+        taxRate:
+          type: number
+          example: 0.10
+        totalAmount:
+          type: number
+          example: 1320.00
+        currency:
+          type: string
+          example: USD
+        notes:
+          type: string
+          example: Payment due within 14 days. Thank you for your business!
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceItem'
+        createdAt:
+          type: string
+          format: date-time
+
+    InvoiceItem:
+      type: object
+      required: [id, description, hours, rate, amount]
+      properties:
+        id:
+          type: string
+          example: item_01
+        description:
+          type: string
+          example: Mobile App Redesign - Authentication Flow
+        hours:
+          type: number
+          example: 10.0
+        rate:
+          type: number
+          example: 120.00
+        amount:
+          type: number
+          example: 1200.00
+
+    GenerateInvoiceDto:
+      type: object
+      required: [clientId]
+      properties:
+        clientId:
+          type: string
+          example: clnt_9f83a21b
+        taxRate:
+          type: number
+          default: 0.0
+          example: 0.10
+        notes:
+          type: string
+          example: Thank you for your business!
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          example: Resource not found
+        details:
+          type: string
+
+    ValidationErrorResponse:
+      type: object
+      required: [error, field]
+      properties:
+        error:
+          type: string
+          example: Validation failed: projectId is required
+        field:
+          type: string
+          example: projectId
+        code:
+          type: string
+          example: MISSING_PROJECT_ID
