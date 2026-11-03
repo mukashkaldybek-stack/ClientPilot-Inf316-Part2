@@ -1,0 +1,82 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Client {
+  id         String     @id @default(uuid())
+  name       String
+  email      String     @unique
+  hourlyRate Float      @default(100.0)
+  currency   String     @default("USD")
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  projects   Project[]
+  invoices   Invoice[]
+
+  @@map("clients")
+}
+
+model Project {
+  id          String      @id @default(uuid())
+  clientId    String
+  name        String
+  description String?
+  status      String      @default("active")
+  budgetHours Float       @default(0.0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  client      Client      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  timeEntries TimeEntry[]
+
+  @@map("projects")
+}
+
+model TimeEntry {
+  id              String    @id @default(uuid())
+  projectId       String
+  description     String?
+  startTime       DateTime  @default(now())
+  endTime         DateTime?
+  durationSeconds Int       @default(0)
+  isBilled        Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  project         Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("time_entries")
+}
+
+model Invoice {
+  id            String        @id @default(uuid())
+  invoiceNumber String        @unique
+  clientId      String
+  issueDate     DateTime      @default(now())
+  dueDate       DateTime
+  status        String        @default("draft")
+  subtotal      Float         @default(0.0)
+  taxRate       Float         @default(0.0)
+  totalAmount   Float         @default(0.0)
+  currency      String        @default("USD")
+  notes         String?
+  createdAt     DateTime      @default(now())
+  client        Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  items         InvoiceItem[]
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id          String   @id @default(uuid())
+  invoiceId   String
+  description String
+  hours       Float
+  rate        Float
+  amount      Float
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@map("invoice_items")
+}

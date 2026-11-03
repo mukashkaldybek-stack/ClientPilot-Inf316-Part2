@@ -1,0 +1,247 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  ClientPilot Infrastructure - Strictly AWS Free-Tier Eligible
+  Deploys VPC, Public Subnet, Internet Gateway, Security Groups, EC2 t2.micro (Docker Compose), and RDS db.t3.micro (PostgreSQL).
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: clientpilot-prod
+    Description: Environment tag identifier
+  DBUser:
+    Type: String
+    Default: postgres
+    Description: Master username for RDS PostgreSQL
+  DBPassword:
+    Type: String
+    NoEcho: true
+    Default: ClientPilot2026Secure!
+    Description: Master password for RDS PostgreSQL
+  KeyName:
+    Type: String
+    Default: ""
+    Description: Optional EC2 KeyPair name for SSH access
+
+Resources:
+  # =========================================================================
+  # Networking: VPC, Internet Gateway, Subnets, Routing
+  # =========================================================================
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-vpc
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-igw
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-public-subnet-1
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select [1, !GetAZs '']
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-public-subnet-2
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-public-rt
+
+  DefaultPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  Subnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet1
+      RouteTableId: !Ref PublicRouteTable
+
+  Subnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet2
+      RouteTableId: !Ref PublicRouteTable
+
+  # =========================================================================
+  # Security Groups
+  # =========================================================================
+  AppSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP (80), HTTPS (443), and SSH (22)
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-app-sg
+
+  DBSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow PostgreSQL access only from App EC2 Security Group
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref AppSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-db-sg
+
+  # =========================================================================
+  # Database: RDS PostgreSQL (db.t3.micro - Free Tier)
+  # =========================================================================
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnets for RDS PostgreSQL Multi-AZ group
+      SubnetIds:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-db-subnet-group
+
+  DatabaseInstance:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceIdentifier: !Sub ${EnvironmentName}-postgres
+      Engine: postgres
+      EngineVersion: "15"
+      DBInstanceClass: db.t3.micro
+      AllocatedStorage: "20"
+      StorageType: gp2
+      MasterUsername: !Ref DBUser
+      MasterUserPassword: !Ref DBPassword
+      DBName: clientpilot
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      VPCSecurityGroups:
+        - !Ref DBSecurityGroup
+      PubliclyAccessible: false
+      MultiAZ: false
+      BackupRetentionPeriod: 7
+      DeletionPolicy: Snapshot
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-rds
+
+  # =========================================================================
+  # Compute: EC2 Instance (t2.micro - Free Tier) running Docker Compose
+  # =========================================================================
+  AppInstance:
+    Type: AWS::EC2::Instance
+    DependsOn: DatabaseInstance
+    Properties:
+      InstanceType: t2.micro
+      SecurityGroupIds:
+        - !Ref AppSecurityGroup
+      SubnetId: !Ref PublicSubnet1
+      ImageId: ami-0c7217cdde317cfec # Amazon Linux 2023 standard x86_64
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum update -y
+          yum install -y docker git
+          systemctl enable docker
+          systemctl start docker
+          usermod -a -G docker ec2-user
+
+          # Install Docker Compose
+          mkdir -p /usr/local/lib/docker/cli-plugins
+          curl -SL https://github.com/docker/compose/releases/download/v2.24.5/docker-compose-linux-x86_64 -o /usr/local/lib/docker/cli-plugins/docker-compose
+          chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
+
+          # Clone and run ClientPilot
+          mkdir -p /opt/clientpilot
+          cd /opt/clientpilot
+          cat << 'EOF' > docker-compose.prod.yml
+          version: '3.8'
+          services:
+            app:
+              image: ghcr.io/mukashkaldybek-stack/clientpilot:latest
+              restart: always
+              ports:
+                - "80:3000"
+              environment:
+                - DATABASE_URL=postgresql://${DBUser}:${DBPassword}@${DatabaseInstance.Endpoint.Address}:${DatabaseInstance.Endpoint.Port}/clientpilot?schema=public
+                - PORT=3000
+                - NODE_ENV=production
+          EOF
+          docker compose -f docker-compose.prod.yml up -d
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvironmentName}-app-host
+
+Outputs:
+  VPCId:
+    Description: VPC Identifier
+    Value: !Ref VPC
+  PublicSubnet:
+    Description: Public Subnet Identifier
+    Value: !Ref PublicSubnet1
+  AppPublicIP:
+    Description: Public IP of the ClientPilot EC2 Host
+    Value: !GetAtt AppInstance.PublicIp
+  AppPublicDNS:
+    Description: Public DNS name of the ClientPilot EC2 Host
+    Value: !GetAtt AppInstance.PublicDnsName
+  DatabaseEndpoint:
+    Description: RDS PostgreSQL Connection Endpoint
+    Value: !GetAtt DatabaseInstance.Endpoint.Address
+  DatabasePort:
+    Description: RDS PostgreSQL Port
+    Value: !GetAtt DatabaseInstance.Endpoint.Port

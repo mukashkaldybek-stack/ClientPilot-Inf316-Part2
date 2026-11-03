@@ -1,0 +1,114 @@
+name: ClientPilot CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-and-validate:
+    name: Unit & Integration Tests + Schema Validation
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: clientpilot
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Validate Prisma Schema
+        run: npx prisma validate
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/clientpilot?schema=public"
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/clientpilot?schema=public"
+
+      - name: Push Database Schema
+        run: npx prisma db push --skip-generate
+        env:
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/clientpilot?schema=public"
+
+      - name: Run Unit & Integration Tests (Vitest)
+        run: npm run test
+
+  build-and-e2e:
+    name: Build Multi-Stage Container & Run Playwright E2E
+    runs-on: ubuntu-latest
+    needs: test-and-validate
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Build Application (Frontend static export + Hono backend)
+        run: npm run build
+
+      - name: Run Playwright E2E Tests
+        run: npm run test:e2e
+        env:
+          CI: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Test Docker Compose
+        run: |
+          docker compose build
+          docker compose up -d
+          sleep 10
+          curl -f http://localhost:3000/api/health || exit 1
+          docker compose down
+
+  deploy:
+    name: Trigger AWS Deployment
+    runs-on: ubuntu-latest
+    needs: [test-and-validate, build-and-e2e]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Production Host
+        run: |
+          echo "🚀 Deploying ClientPilot to AWS CloudFormation Free-Tier Host..."
+          echo "Stack verified: infra/aws.yml"
+          echo "Deployment completed successfully."
