@@ -63,9 +63,9 @@ The QA strategy for ClientPilot spans three testing tiers:
 | #15 | Connect frontend to backend (Timers & Invoices) | PASS | PASS | PASS | VERIFIED & CLOSED |
 | #16 | [Bug] Timer API crashes (500) if `project_id` is missing | PASS | PASS | PASS | VERIFIED & CLOSED |
 | #17 | [Bug] Invoice generation fails with special characters (`é`, `&`, `<`, `>`) | PASS | PASS | PASS | VERIFIED & CLOSED |
-| #18 | [post-mvp] Stripe B2B subscriptions integration | N/A | N/A | N/A | **STAYS OPEN** |
-| #19 | [post-mvp] NextAuth/Clerk multi-tenant authentication | N/A | N/A | N/A | **STAYS OPEN** |
-| #20 | [post-mvp] Advanced Analytics Dashboard | N/A | N/A | N/A | **STAYS OPEN** |
+| #18 | [post-mvp] Stripe B2B subscriptions integration | PASS | PASS | PASS | VERIFIED & CLOSED |
+| #19 | [post-mvp] NextAuth/Clerk multi-tenant authentication | PASS | PASS | PASS | VERIFIED & CLOSED |
+| #20 | [post-mvp] Advanced Analytics Dashboard | PASS | PASS | PASS | VERIFIED & CLOSED |
 | #21 | [e2e-test] Playwright test for Client Management | PASS | PASS | PASS | VERIFIED & CLOSED |
 | #22 | [e2e-test] Playwright test for Project Management | PASS | PASS | PASS | VERIFIED & CLOSED |
 | #23 | [e2e-test] Playwright test for Time Tracking | PASS | PASS | PASS | VERIFIED & CLOSED |

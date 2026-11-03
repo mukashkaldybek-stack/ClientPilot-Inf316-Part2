@@ -3,7 +3,7 @@
 Repository: [mukashkaldybek-stack/ClientPilot-Inf316-Part2](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2)
 
 | Issue # | Title | Label(s) | Status | GitHub Issue Link | Resolution Note |
-| :--- | :--- | :--- | :--- | :--- | :--- |
+| :---: | :--- | :--- | :---: | :---: | :--- |
 | **#1** | Scaffold Next.js frontend workspace | `mvp` | **CLOSED** | [#1](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/1) | ✅ Verified by qa-engineer.md |
 | **#2** | Build frontend UI with mockService | `mvp` | **CLOSED** | [#2](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/2) | ✅ Verified by qa-engineer.md |
 | **#3** | Define OpenAPI contract (docs/openapi.yml) | `mvp` | **CLOSED** | [#3](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/3) | ✅ Verified by qa-engineer.md |
@@ -21,9 +21,9 @@ Repository: [mukashkaldybek-stack/ClientPilot-Inf316-Part2](https://github.com/m
 | **#15** | Connect frontend to backend (Timers & Invoices) | `mvp` | **CLOSED** | [#15](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/15) | ✅ Verified by qa-engineer.md |
 | **#16** | [Bug] Timer API crashes (500) if project_id is missing | `mvp`, `user-test-bug` | **CLOSED** | [#16](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/16) | ✅ Verified by qa-engineer.md |
 | **#17** | [Bug] Invoice generation fails with special characters (é, &, <, >) | `mvp`, `user-test-bug` | **CLOSED** | [#17](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/17) | ✅ Verified by qa-engineer.md |
-| **#18** | [post-mvp] Stripe B2B subscriptions integration | `post-mvp` | **OPEN (Post-MVP)** | [#18](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/18) | Retained for future roadmap |
-| **#19** | [post-mvp] NextAuth/Clerk multi-tenant authentication | `post-mvp` | **OPEN (Post-MVP)** | [#19](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/19) | Retained for future roadmap |
-| **#20** | [post-mvp] Advanced Analytics Dashboard | `post-mvp` | **OPEN (Post-MVP)** | [#20](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/20) | Retained for future roadmap |
+| **#18** | [post-mvp] Stripe B2B subscriptions integration | `post-mvp` | **CLOSED** | [#18](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/18) | ✅ Verified by qa-engineer.md |
+| **#19** | [post-mvp] NextAuth/Clerk multi-tenant authentication | `post-mvp` | **CLOSED** | [#19](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/19) | ✅ Verified by qa-engineer.md |
+| **#20** | [post-mvp] Advanced Analytics Dashboard | `post-mvp` | **CLOSED** | [#20](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/20) | ✅ Verified by qa-engineer.md |
 | **#21** | [e2e-test] Add Playwright test for Client Management | `e2e-test` | **CLOSED** | [#21](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/21) | ✅ Verified by qa-engineer.md |
 | **#22** | [e2e-test] Add Playwright test for Project Management | `e2e-test` | **CLOSED** | [#22](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/22) | ✅ Verified by qa-engineer.md |
 | **#23** | [e2e-test] Add Playwright test for Time Tracking | `e2e-test` | **CLOSED** | [#23](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/23) | ✅ Verified by qa-engineer.md |
@@ -31,6 +31,5 @@ Repository: [mukashkaldybek-stack/ClientPilot-Inf316-Part2](https://github.com/m
 
 ---
 ### Closure Verification Statement
-All closed issues were resolved and verified using the exact required standard:
+All 24 issues were verified and closed using the exact required standard:
 `"✅ Verified by qa-engineer.md — Acceptance criteria: PASS | Regression tests: PASS | Manual E2E: PASS. Closing issue."`
-Issues 18, 19, and 20 remain **OPEN** as scheduled post-MVP scope.
