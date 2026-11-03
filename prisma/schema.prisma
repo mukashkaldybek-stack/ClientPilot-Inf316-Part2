@@ -80,3 +80,4 @@ model InvoiceItem {
 
   @@map("invoice_items")
 }
+

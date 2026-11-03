@@ -31,3 +31,4 @@ test.describe('Issue #24: Invoice Generation E2E', () => {
     await expect(page.locator('[data-testid="invoices-list"]')).toBeVisible();
   });
 });
+

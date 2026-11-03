@@ -97,3 +97,4 @@ ClientPilot enables freelance knowledge workers (developers, designers, consulta
   - All textual input fields (`name`, `description`, `notes`) must be sanitized using standard HTML entity escaping (`&` $\rightarrow$ `&amp;`, `<` $\rightarrow$ `&lt;`, `>` $\rightarrow$ `&gt;`, `"` $\rightarrow$ `&quot;`) while preserving valid UTF-8 international characters (`é`, `ñ`, `ü`, `ø`).
   - Invoice generation endpoint `/api/invoices/generate` must safely process these payloads and return HTTP 201 with properly escaped and structured items.
   - Regression unit tests must assert payloads with `René & Frères <Consulting>` generate valid invoice records without throwing errors.
+

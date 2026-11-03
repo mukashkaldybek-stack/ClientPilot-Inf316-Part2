@@ -154,3 +154,4 @@ sequenceDiagram
 1. **Timer Missing Project ID**: Any request to start a timer lacking a valid `projectId` must strictly respond with `422 Unprocessable Entity` and a descriptive payload, rather than crashing with an unhandled `500`.
 2. **Special Character Invariant**: Client names or project notes containing Unicode diacritics or HTML/XML entities (`Société & Co <Paris>`, `Müller & Söhne`) must be sanitized against XSS while preserving legitimate characters in generated invoices.
 3. **Billable Time Deduplication**: Once a time entry is attached to an invoice, its `isBilled` state must atomically toggle to `true` to prevent double-invoicing.
+

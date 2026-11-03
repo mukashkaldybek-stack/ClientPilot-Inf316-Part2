@@ -28,3 +28,4 @@ test.describe('Issue #21: Client Management E2E', () => {
     await expect(clientHeading).toBeVisible({ timeout: 10000 });
   });
 });
+

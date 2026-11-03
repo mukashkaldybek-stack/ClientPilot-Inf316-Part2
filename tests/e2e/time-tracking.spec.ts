@@ -36,3 +36,4 @@ test.describe('Issue #23: Time Tracking E2E', () => {
     await expect(loggedEntry).toBeVisible({ timeout: 10000 });
   });
 });
+

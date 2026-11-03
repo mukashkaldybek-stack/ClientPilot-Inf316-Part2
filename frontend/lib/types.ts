@@ -59,3 +59,4 @@ export interface Invoice {
   items: InvoiceItem[];
   createdAt?: string;
 }
+

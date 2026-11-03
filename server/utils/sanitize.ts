@@ -12,3 +12,4 @@ export function sanitizeString(input: string | undefined | null): string {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+

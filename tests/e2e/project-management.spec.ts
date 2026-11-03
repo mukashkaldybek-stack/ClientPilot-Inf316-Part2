@@ -26,3 +26,4 @@ test.describe('Issue #22: Project Management E2E', () => {
     await expect(projectCard).toBeVisible({ timeout: 10000 });
   });
 });
+

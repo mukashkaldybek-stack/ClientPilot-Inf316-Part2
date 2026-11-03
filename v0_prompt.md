@@ -77,3 +77,4 @@ Tech Stack: Next.js 14 (App Router), Tailwind CSS, Lucide React icons, and shadc
 ### State Management & Props
 * Built with clean React state hooks or local mock service.
 * Fully interactive: adding a client immediately updates the project dropdown; starting a timer updates the running counter; stopping logs a time entry; generating an invoice displays the new invoice and marks entries as billed.
+

@@ -66,3 +66,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 
 # Start unified server serving static export at / and API at /api/*
 CMD ["node", "dist/server/index.js"]
+

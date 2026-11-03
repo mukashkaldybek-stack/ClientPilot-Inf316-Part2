@@ -245,3 +245,4 @@ Outputs:
   DatabasePort:
     Description: RDS PostgreSQL Port
     Value: !GetAtt DatabaseInstance.Endpoint.Port
+

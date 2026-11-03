@@ -379,3 +379,4 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
     </div>
   );
 };
+

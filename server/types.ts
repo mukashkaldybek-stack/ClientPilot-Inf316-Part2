@@ -100,3 +100,4 @@ export interface GenerateInvoiceDto {
   taxRate?: number;
   notes?: string;
 }
+

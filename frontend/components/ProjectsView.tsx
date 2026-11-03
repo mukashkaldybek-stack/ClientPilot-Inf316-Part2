@@ -334,3 +334,4 @@ export const ProjectsView: React.FC<ProjectsViewProps> = ({
     </div>
   );
 };
+

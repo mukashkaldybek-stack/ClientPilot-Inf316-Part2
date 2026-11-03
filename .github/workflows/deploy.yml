@@ -112,3 +112,4 @@ jobs:
           echo "🚀 Deploying ClientPilot to AWS CloudFormation Free-Tier Host..."
           echo "Stack verified: infra/aws.yml"
           echo "Deployment completed successfully."
+

@@ -77,3 +77,4 @@ The QA strategy for ClientPilot spans three testing tiers:
 Every closed issue is resolved and tagged using the official verification statement:
 `"✅ Verified by qa-engineer.md — Acceptance criteria: PASS | Regression tests: PASS | Manual E2E: PASS. Closing issue."`
 Issues 18, 19, and 20 remain open for post-MVP enhancements.
+

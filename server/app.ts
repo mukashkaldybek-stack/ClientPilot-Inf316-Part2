@@ -30,3 +30,4 @@ app.route('/api/invoices', invoiceRoutes);
 app.all('/api/*', (c) => {
   return c.json({ error: 'Endpoint not found' }, 404);
 });
+
