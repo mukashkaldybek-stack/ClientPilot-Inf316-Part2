@@ -1,0 +1,152 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: "AI On-Call Webhook"
+    receivers:
+      - uid: "ai-oncall-webhook-uid"
+        type: webhook
+        disableResolveMessage: false
+        settings:
+          url: "http://app:3000/api/alerts/webhook"
+          httpMethod: "POST"
+
+policies:
+  - orgId: 1
+    receiver: "AI On-Call Webhook"
+    group_by: ["alertname", "cluster", "service"]
+    repeat_interval: 5m
+
+groups:
+  - orgId: 1
+    name: "ClientPilotApplicationAlerts"
+    folder: "ClientPilot"
+    interval: 10s
+    rules:
+      - uid: "alert-high-error-rate"
+        title: "HighErrorRate"
+        condition: "C"
+        data:
+          - refId: "A"
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: "Prometheus"
+            model:
+              expr: "sum(rate(clientpilot_http_request_duration_seconds_count{status=~\"5..\"}[5m])) / sum(rate(clientpilot_http_request_duration_seconds_count[5m])) * 100 > 5"
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: "A"
+          - refId: "C"
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evalMatches:
+                    - value: 5
+                  type: gt
+              expression: "A"
+              reducer: "last"
+              type: threshold
+        for: "30s"
+        labels:
+          severity: "critical"
+          service: "clientpilot-backend"
+        annotations:
+          summary: "ClientPilot HTTP error rate exceeds 5%"
+          description: "High error rate detected across backend HTTP endpoints over the last 5 minutes."
+
+      - uid: "alert-high-latency-p95"
+        title: "HighLatencyP95"
+        condition: "C"
+        data:
+          - refId: "A"
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: "Prometheus"
+            model:
+              expr: "histogram_quantile(0.95, sum(rate(clientpilot_http_request_duration_seconds_bucket[5m])) by (le)) > 1.0"
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: "A"
+          - refId: "C"
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evalMatches:
+                    - value: 1
+                  type: gt
+              expression: "A"
+              reducer: "last"
+              type: threshold
+        for: "30s"
+        labels:
+          severity: "warning"
+          service: "clientpilot-backend"
+        annotations:
+          summary: "ClientPilot p95 latency exceeds 1.0s"
+          description: "P95 response latency is higher than 1 second, impacting user experience."
+
+      - uid: "alert-pdf-generation-errors"
+        title: "PdfGenerationErrorsSpike"
+        condition: "C"
+        data:
+          - refId: "A"
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: "Prometheus"
+            model:
+              expr: "increase(clientpilot_pdf_generation_errors_total[5m]) > 2"
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: "A"
+          - refId: "C"
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evalMatches:
+                    - value: 2
+                  type: gt
+              expression: "A"
+              reducer: "last"
+              type: threshold
+        for: "10s"
+        labels:
+          severity: "critical"
+          service: "clientpilot-invoice-engine"
+        annotations:
+          summary: "Spike in PDF / Invoice generation failures"
+          description: "Multiple failures recorded during invoice and PDF compiling pipeline."
+
+      - uid: "alert-no-data"
+        title: "ClientPilotNoData"
+        condition: "C"
+        data:
+          - refId: "A"
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: "Prometheus"
+            model:
+              expr: "absent(clientpilot_active_timers)"
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: "A"
+          - refId: "C"
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evalMatches:
+                    - value: 0
+                  type: gt
+              expression: "A"
+              reducer: "last"
+              type: threshold
+        for: "1m"
+        labels:
+          severity: "critical"
+          service: "clientpilot-backend"
+        annotations:
+          summary: "No metrics received from ClientPilot service"
+          description: "ClientPilot metrics pipeline has stalled or backend is unreachable."

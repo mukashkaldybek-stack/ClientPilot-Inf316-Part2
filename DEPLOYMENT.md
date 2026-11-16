@@ -205,3 +205,43 @@ The GitHub Actions workflow at [`.github/workflows/deploy.yml`](.github/workflow
 3. **Job: `deploy`**:
    - Automatically executes upon successful merge into the `main` branch.
    - Deploys container image to production infrastructure.
+
+---
+
+## 9. Environment Isolation & Release Promotion (Phase 2 DevOps)
+
+### Dual Environment Compose Architecture
+ClientPilot isolates development and production runtime boundaries:
+* **Development (`docker compose up`)**:
+  - Uses `docker-compose.yml`.
+  - Spins up PostgreSQL database `clientpilot_dev`.
+  - Spins up complete local observability stack: OTel Collector, Prometheus, Tempo, Loki, and Grafana.
+  - Mounts local directories for rapid feedback.
+* **Production (`docker compose -f docker-compose.yml -f docker-compose.prod.yml up`)**:
+  - Uses `docker-compose.prod.yml` overlay.
+  - Applies strict CPU (`cpus: '1.0'`) and memory (`memory: 1024M`) limits.
+  - Enforces `restart: always` for zero-downtime container resilience.
+  - Connects to production database `clientpilot_prod`.
+  - Disables dev seeding and mock bypasses.
+
+### Manual Promotion Pipeline (`.github/workflows/promote.yml`)
+1. Releases are built from `main` or release branches and tagged with `dev-<sha>`.
+2. Promotion to production is triggered manually via **GitHub Actions Workflow Dispatch**:
+   ```bash
+   gh workflow run promote.yml -f image_tag=dev-abc1234
+   ```
+3. Promotion requires explicit sign-off via the protected GitHub Environment **`production`**.
+4. The workflow pulls the validated container image, re-tags it to `prod-<sha>`, and promotes it to the production cluster.
+
+---
+
+## 10. Observability Stack Deployment
+
+The observability cluster includes:
+* **OpenTelemetry Collector**: Listens on port 4318 (HTTP OTLP) and routes metrics to Prometheus, traces to Tempo, and logs to Loki.
+* **Prometheus**: Scrapes `/metrics` at `http://app:3000/metrics` every 15s.
+* **Grafana Tempo**: Distributed tracing engine indexing OTLP spans.
+* **Grafana Loki**: Log aggregation platform collecting structured JSON logs.
+* **Grafana (Port 3001)**: Pre-provisioned dashboards with alerts configured for `HighErrorRate`, `HighLatencyP95`, and `PdfGenerationErrorsSpike`.
+* **Autonomous AI On-Call Responder**: Webhook endpoint at `/api/alerts/webhook` and simulation drill at `/api/alerts/simulate` for autonomous incident triage and GitHub tracking.
+

@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { Client, Project, TimeEntry, Invoice, InvoiceItem, CreateClientDto, UpdateClientDto, CreateProjectDto, UpdateProjectDto } from '../types';
 import { sanitizeString } from '../utils/sanitize';
+import { withSpan } from '../telemetry';
 
 export class PrismaStore {
   private prisma: PrismaClient;
@@ -11,40 +12,46 @@ export class PrismaStore {
 
   // --- Clients ---
   async getClients(): Promise<Client[]> {
-    const clients = await this.prisma.client.findMany({
-      orderBy: { createdAt: 'desc' },
+    return await withSpan('prisma.client.findMany', async () => {
+      const clients = await this.prisma.client.findMany({
+        orderBy: { createdAt: 'desc' },
+      });
+      return clients.map(c => ({
+        ...c,
+        createdAt: c.createdAt.toISOString(),
+        updatedAt: c.updatedAt.toISOString(),
+      }));
     });
-    return clients.map(c => ({
-      ...c,
-      createdAt: c.createdAt.toISOString(),
-      updatedAt: c.updatedAt.toISOString(),
-    }));
   }
 
   async getClientById(id: string): Promise<Client | null> {
-    const c = await this.prisma.client.findUnique({ where: { id } });
-    if (!c) return null;
-    return {
-      ...c,
-      createdAt: c.createdAt.toISOString(),
-      updatedAt: c.updatedAt.toISOString(),
-    };
+    return await withSpan('prisma.client.findUnique', async () => {
+      const c = await this.prisma.client.findUnique({ where: { id } });
+      if (!c) return null;
+      return {
+        ...c,
+        createdAt: c.createdAt.toISOString(),
+        updatedAt: c.updatedAt.toISOString(),
+      };
+    }, { clientId: id });
   }
 
   async createClient(data: CreateClientDto): Promise<Client> {
-    const c = await this.prisma.client.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        hourlyRate: Number(data.hourlyRate),
-        currency: data.currency || 'USD',
-      },
+    return await withSpan('prisma.client.create', async () => {
+      const c = await this.prisma.client.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          hourlyRate: Number(data.hourlyRate),
+          currency: data.currency || 'USD',
+        },
+      });
+      return {
+        ...c,
+        createdAt: c.createdAt.toISOString(),
+        updatedAt: c.updatedAt.toISOString(),
+      };
     });
-    return {
-      ...c,
-      createdAt: c.createdAt.toISOString(),
-      updatedAt: c.updatedAt.toISOString(),
-    };
   }
 
   async updateClient(id: string, data: UpdateClientDto): Promise<Client | null> {

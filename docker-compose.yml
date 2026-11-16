@@ -4,17 +4,17 @@ services:
   db:
     image: postgres:15-alpine
     container_name: clientpilot-db
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: clientpilot
+      POSTGRES_DB: clientpilot_dev
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata_dev:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d clientpilot"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d clientpilot_dev"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -24,18 +24,91 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: clientpilot-app
-    restart: always
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/clientpilot?schema=public
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/clientpilot_dev?schema=public
       - PORT=3000
-      - NODE_ENV=production
+      - NODE_ENV=development
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - PROMETHEUS_METRICS_ENABLED=true
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.95.0
+    container_name: clientpilot-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    ports:
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "8889:8889" # Prometheus metrics exporter
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
+
+  prometheus:
+    image: prom/prometheus:v2.49.1
+    container_name: clientpilot-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+
+  tempo:
+    image: grafana/tempo:2.3.1
+    container_name: clientpilot-tempo
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./observability/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/tmp/tempo
+    ports:
+      - "3200:3200"
+
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: clientpilot-loki
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    volumes:
+      - ./observability/loki.yaml:/etc/loki/local-config.yaml:ro
+      - loki_data:/tmp/loki
+    ports:
+      - "3100:3100"
+
+  grafana:
+    image: grafana/grafana:10.3.3
+    container_name: clientpilot-grafana
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+      - tempo
+      - loki
 
 volumes:
-  pgdata:
-    driver: local
-
+  pgdata_dev:
+  prometheus_data:
+  tempo_data:
+  loki_data:
+  grafana_data:

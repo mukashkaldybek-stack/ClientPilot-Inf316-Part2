@@ -150,7 +150,83 @@
 
 ---
 
-## 4. Operational Commands Guide
+## 4. Phase 2: DevOps & Observability Iteration Protocols
+
+### Iteration 8: Environment Isolation (Dev vs Prod) — Issue #26
+* **Objective**: Segregate development and production environments with discrete compose files, database instances, and environment configurations.
+* **Implementation**:
+  - `docker-compose.yml`: Primary development composition running PostgreSQL 15 (`clientpilot_dev`), OpenTelemetry Collector (`otel/opentelemetry-collector-contrib`), Prometheus (`prom/prometheus:v2.51.0`), Tempo (`grafana/tempo:2.4.1`), Loki (`grafana/loki:2.9.4`), Grafana (`grafana/grafana:10.4.1`), and the Node.js application container.
+  - `docker-compose.prod.yml`: Production overlay enforcing `restart: always`, resource reservations and limits (CPU: 1.0, Memory: 1GB), production PostgreSQL container (`clientpilot_prod`), production environment injection, and disabling development mock seeders.
+  - Environment files: Created `.env.dev` (with `DATABASE_URL="postgresql://postgres:postgres@localhost:5432/clientpilot_dev"`) and `.env.prod.example`.
+  - CloudFormation: Updated `infra/aws.yml` with dual named deployment targets (`dev` and `prod`) and dynamic environment parameterization.
+* **Verification**:
+  - `docker compose up` boots dev environment with full telemetry.
+  - `docker compose -f docker-compose.yml -f docker-compose.prod.yml config` produces validated production composition.
+
+### Iteration 9: Manual Promotion Pipeline (Dev → Prod) — Issue #27
+* **Objective**: Automate release promotion via GitHub Actions with explicit reviewer gate and audit logging.
+* **Implementation**:
+  - Created `.github/workflows/promote.yml` with `workflow_dispatch` trigger.
+  - Input parameters: `image_tag` (commit SHA or tag, e.g., `dev-v1.0.0`) and optional target cluster.
+  - Protection gate: Attached to GitHub environment `production` requiring required reviewer sign-off.
+  - Re-tagging: Authenticates to GitHub Container Registry (GHCR), pulls `ghcr.io/${{ github.repository }}:${{ inputs.image_tag }}`, tags as `prod-${{ inputs.image_tag }}`, and deploys to target container host (AWS EC2 / Railway).
+* **Verification**: Workflow syntax validated, step execution mapped, and logged in developer audit trails.
+
+### Iteration 10: OpenTelemetry Full-Stack Instrumentation — Issue #28
+* **Objective**: Implement vendor-neutral OpenTelemetry instrumentation in Hono backend covering traces, metrics, and structured logs.
+* **Implementation**:
+  - Installed `@opentelemetry/sdk-node`, `@opentelemetry/api`, `@opentelemetry/exporter-trace-otlp-http`, and `@opentelemetry/exporter-metrics-otlp-http`.
+  - Created `server/telemetry.ts` initializing OpenTelemetry `NodeSDK` with OTLP HTTP trace exporter directed to `http://localhost:4318/v1/traces`.
+  - Implemented `withSpan(name, fn, attributes)` helper wrapping synchronous and asynchronous operations in active OpenTelemetry spans.
+  - Instrumented `server/store/prismaStore.ts` with custom database spans for `db.client.create`, `db.project.list`, `db.timer.start`, and `db.invoice.create`.
+  - Structured logging with `logTelemetry()` emitting ISO-8601 timestamps, trace IDs, span IDs, and level-tagged JSON, with forwarders for Loki (`http://localhost:3100/loki/api/v1/push`).
+  - Configured `otel-collector-config.yaml` pipeline routing OTLP traces to Tempo, metrics to Prometheus, and logs to Loki.
+* **Verification**: Backend exports OTLP spans cleanly, tested via Vitest suite.
+
+### Iteration 11: Domain Metrics & Grafana Dashboard — Issue #29
+* **Objective**: Expose micro-SaaS business and latency metrics via Prometheus format and provision Grafana dashboards.
+* **Implementation**:
+  - Built `server/metrics.ts` utilizing `prom-client` exposing:
+    - `clientpilot_invoices_generated_total`: Total count of compiled invoices.
+    - `clientpilot_time_tracked_hours_total`: Cumulative billable hours logged.
+    - `clientpilot_active_timers`: Current gauge of live running timers.
+    - `clientpilot_http_request_duration_seconds`: Histogram measuring latency percentiles across endpoints.
+    - `clientpilot_pdf_generation_duration_seconds`: Histogram measuring invoice PDF rendering time.
+    - `clientpilot_pdf_generation_errors_total`: Counter for render and compilation failures.
+  - Exposed `GET /metrics` route on Hono backend with standard Prometheus text exposition format.
+  - Automated Grafana provisioning:
+    - Datasources: `grafana/provisioning/datasources/datasources.yaml` (Prometheus at `http://prometheus:9090`, Tempo at `http://tempo:3200`, Loki at `http://loki:3100`).
+    - Dashboard: `grafana/provisioning/dashboards/clientpilot-overview.json` visualizing Active Timers, Invoices Generated, p95/p99 Latency, Error Rate %, and Trace/Log correlations.
+* **Verification**: GET `/metrics` returns valid Prometheus metrics; Grafana dashboard passes JSON schema validation.
+
+### Iteration 12: Grafana Alert Rules — Issue #30
+* **Objective**: Configure declarative SLO alert rules for fast error detection.
+* **Implementation**:
+  - Created `grafana/provisioning/alerting/rules.yaml` containing 4 alert definitions:
+    1. `HighErrorRate`: Triggers when HTTP 5xx error rate exceeds 5% over 5m window (Severity: Critical).
+    2. `HighLatencyP95`: Triggers when p95 request duration exceeds 1.5s (Severity: Warning).
+    3. `PdfGenerationErrorsSpike`: Triggers immediately when invoice compilation error counter increments (Severity: Critical).
+    4. `ClientPilotNoData`: Watchdog alert triggering if metrics scrape is missing for >2m.
+  - Notification policy configured with Webhook contact point routing alerts to `http://app:3000/api/alerts/webhook`.
+* **Verification**: Alert rules validate against Prometheus Alertmanager/Grafana syntax.
+
+### Iteration 13: Autonomous AI On-Call Responder — Issue #31
+* **Objective**: Build an autonomous AI agent triggered by alerting webhooks that investigates incidents, inspects metrics, formulates hypotheses, recommends fixes, creates GitHub tracking issues, and records post-mortems.
+* **Implementation**:
+  - Developed `server/oncall.ts` containing the autonomous triage engine:
+    - Parses Grafana alert webhooks (`POST /api/alerts/webhook`).
+    - Gathers current telemetry snapshot (active timers, p95 latency, error rate, Loki logs).
+    - Uses automated reasoning to construct root-cause hypothesis and 3 immediate remediation steps.
+    - Executes `gh issue create` autonomously with label `observability` and title `INCIDENT: <AlertName> (<Severity>)`.
+    - Appends incident record to `incidents.md` with post-mortem documentation.
+    - Exposes synthetic test trigger `POST /api/alerts/simulate` for SRE drills and automated test suites.
+* **Verification**:
+  - Synthetic alert simulation executed: successfully created GitHub Issue #32 with full triage comment and closed it automatically after verification.
+  - Verified 6/6 tests passing in `tests/observability.test.ts`.
+
+---
+
+## 5. Operational Commands Guide
 
 ### Local Development
 ```bash
@@ -178,12 +254,18 @@ npm run test:e2e
 # Build unified multi-stage container
 docker build -t clientpilot:latest .
 
-# Run application with PostgreSQL database via Docker Compose
+# Run development environment (PostgreSQL dev, OTel, Prometheus, Tempo, Loki, Grafana)
 docker compose up -d
+
+# Run production environment overlay (resource limits, prod database, restart policy)
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 # Check health and logs
 docker compose logs -f app
 curl http://localhost:3000/api/health
+
+# Access Grafana Observability Portal
+# Open http://localhost:3001 (Default credentials: admin / admin)
 
 # Teardown
 docker compose down

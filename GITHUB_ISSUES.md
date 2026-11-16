@@ -2,6 +2,8 @@
 
 Repository: [mukashkaldybek-stack/ClientPilot-Inf316-Part2](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2)
 
+## Issue Tracking Matrix
+
 | Issue # | Title | Label(s) | Status | GitHub Issue Link | Resolution Note |
 | :---: | :--- | :--- | :---: | :---: | :--- |
 | **#1** | Scaffold Next.js frontend workspace | `mvp` | **CLOSED** | [#1](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/1) | ✅ Verified by qa-engineer.md |
@@ -21,15 +23,26 @@ Repository: [mukashkaldybek-stack/ClientPilot-Inf316-Part2](https://github.com/m
 | **#15** | Connect frontend to backend (Timers & Invoices) | `mvp` | **CLOSED** | [#15](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/15) | ✅ Verified by qa-engineer.md |
 | **#16** | [Bug] Timer API crashes (500) if project_id is missing | `mvp`, `user-test-bug` | **CLOSED** | [#16](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/16) | ✅ Verified by qa-engineer.md |
 | **#17** | [Bug] Invoice generation fails with special characters (é, &, <, >) | `mvp`, `user-test-bug` | **CLOSED** | [#17](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/17) | ✅ Verified by qa-engineer.md |
-| **#18** | [post-mvp] Stripe B2B subscriptions integration | `post-mvp` | **CLOSED** | [#18](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/18) | ✅ Verified by qa-engineer.md |
-| **#19** | [post-mvp] NextAuth/Clerk multi-tenant authentication | `post-mvp` | **CLOSED** | [#19](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/19) | ✅ Verified by qa-engineer.md |
-| **#20** | [post-mvp] Advanced Analytics Dashboard | `post-mvp` | **CLOSED** | [#20](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/20) | ✅ Verified by qa-engineer.md |
+| **#18** | [post-mvp] Stripe B2B subscriptions integration | `post-mvp` | **OPEN** | [#18](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/18) | Post-MVP backlog item (active) |
+| **#19** | [post-mvp] NextAuth/Clerk multi-tenant authentication | `post-mvp` | **OPEN** | [#19](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/19) | Post-MVP backlog item (active) |
+| **#20** | [post-mvp] Advanced Analytics Dashboard | `post-mvp` | **OPEN** | [#20](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/20) | Post-MVP backlog item (active) |
 | **#21** | [e2e-test] Add Playwright test for Client Management | `e2e-test` | **CLOSED** | [#21](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/21) | ✅ Verified by qa-engineer.md |
 | **#22** | [e2e-test] Add Playwright test for Project Management | `e2e-test` | **CLOSED** | [#22](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/22) | ✅ Verified by qa-engineer.md |
 | **#23** | [e2e-test] Add Playwright test for Time Tracking | `e2e-test` | **CLOSED** | [#23](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/23) | ✅ Verified by qa-engineer.md |
 | **#24** | [e2e-test] Add Playwright test for Invoice Generation | `e2e-test` | **CLOSED** | [#24](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/24) | ✅ Verified by qa-engineer.md |
+| **#25** | [phase-2] DevOps & Observability Epic | `devops`, `observability` | **CLOSED** | [#25](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/25) | Phase 2 Alignment Anchor |
+| **#26** | [devops] Separate development and production environments | `devops` | **CLOSED** | [#26](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/26) | ✅ Verified by qa-engineer.md |
+| **#27** | [devops] Manual CI/CD promotion trigger (dev → prod) | `devops` | **CLOSED** | [#27](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/27) | ✅ Verified by qa-engineer.md |
+| **#28** | [observability] Instrument backend with OpenTelemetry (metrics, traces, logs) | `observability` | **CLOSED** | [#28](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/28) | ✅ Verified by qa-engineer.md |
+| **#29** | [observability] Define application-specific metrics + Grafana dashboard | `observability` | **CLOSED** | [#29](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/29) | ✅ Verified by qa-engineer.md |
+| **#30** | [observability] Alert rules on application metrics | `observability` | **CLOSED** | [#30](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/30) | ✅ Verified by qa-engineer.md |
+| **#31** | [observability] AI agent as on-call responder for alerts | `observability` | **CLOSED** | [#31](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/31) | ✅ Verified by qa-engineer.md |
+| **#32** | INCIDENT: HighErrorRate (CRITICAL) | `observability` | **CLOSED** | [#32](https://github.com/mukashkaldybek-stack/ClientPilot-Inf316-Part2/issues/32) | Synthetic drill verified & resolved |
 
 ---
-### Closure Verification Statement
-All 24 issues were verified and closed using the exact required standard:
+
+## Closure Verification Statement
+Every closed engineering issue is resolved and tagged using the official QA verification standard:
 `"✅ Verified by qa-engineer.md — Acceptance criteria: PASS | Regression tests: PASS | Manual E2E: PASS. Closing issue."`
+
+As designed by the product roadmap, only issues **#18**, **#19**, and **#20** remain in the `OPEN` state for Post-MVP implementation.

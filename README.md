@@ -69,9 +69,13 @@ ClientPilot solves this by offering a zero-bloat, high-performance solution that
 | **Backend API** | **Hono (TypeScript)** | Ultra-lightweight, high-speed API framework running on Node.js with declarative route dispatching. |
 | **ORM & Schema** | **Prisma 6** | Type-safe query engine, migrations, and declarative PostgreSQL schema definitions. |
 | **Database** | **PostgreSQL 15** | Relational persistence with foreign keys, indexes, and transactional consistency. |
-| **Testing** | **Vitest** | Blazing-fast unit and API integration testing. |
+| **Testing** | **Vitest** | Blazing-fast unit, API, and observability integration testing. |
 | **E2E Testing** | **Playwright** | Full browser automation verifying end-to-end user journeys in headless Chromium. |
-| **Container** | **Docker & Docker Compose** | Multi-stage single production image and multi-service orchestration. |
+| **Telemetry & APM** | **OpenTelemetry SDK** | Distributed tracing, spans, and metrics instrumentation across routes and Prisma queries. |
+| **Metrics & Logs** | **Prometheus + Tempo + Loki** | Prometheus metrics scraping, Grafana Tempo distributed trace storage, and Loki structured log indexing. |
+| **Visualization** | **Grafana 10** | Provisioned dashboards for real-time micro-SaaS KPIs and SLO alerts. |
+| **AI Reliability** | **Autonomous On-Call Agent** | Webhook-driven triage agent formulating root-cause hypotheses, remediation, and GitHub incident issues. |
+| **Container** | **Docker & Docker Compose** | Multi-stage production container with separated Dev/Prod compose overlays. |
 | **Infrastructure** | **AWS CloudFormation** | 100% Free-Tier eligible CloudFormation template (VPC, EC2 `t2.micro`, RDS `db.t3.micro`). |
 
 ---
@@ -107,16 +111,20 @@ graph TD
 ClientPilot-Inf316-Part2/
 ├── .github/
 │   └── workflows/
-│       └── deploy.yml              # CI/CD: Vitest, Prisma, Playwright, Docker, Deploy
-├── .env.example                    # Sample environment variables
+│       ├── deploy.yml              # CI/CD: Vitest, Prisma, Playwright, Docker, Deploy
+│       └── promote.yml             # Manual promotion pipeline (dev → prod)
+├── .env.dev                        # Local development environment configuration
+├── .env.prod.example               # Production environment variable template
 ├── .gitignore                      # Git ignore patterns
 ├── Dockerfile                      # Multi-stage production container
 ├── GITHUB_ISSUES.md                # Real issue mapping and resolution audit
 ├── README.md                       # Comprehensive documentation
 ├── DEPLOYMENT.md                   # Production deployment guide
+├── ROADMAP.md                      # Post-MVP & Managed Observability Rollout Roadmap
 ├── brainstorm.md                   # Product concept and domain diagrams
-├── developer.md                    # Technical log across Iterations 1 to 8
-├── docker-compose.yml              # Postgres 15 + App service orchestration
+├── developer.md                    # Technical log across Iterations 1 to 13
+├── docker-compose.yml              # Dev composition: App, Postgres, OTel, Prom, Tempo, Loki, Grafana
+├── docker-compose.prod.yml         # Production overlay: Resource limits, prod DB, restart policy
 ├── docs/
 │   └── openapi.yml                 # OpenAPI 3.0 REST specification
 ├── frontend/                       # Next.js frontend source
@@ -124,8 +132,16 @@ ClientPilot-Inf316-Part2/
 │   ├── components/                 # React UI views (Clients, Projects, Timers, Invoices)
 │   ├── lib/                        # API client, types, and mock service
 │   └── next.config.js              # Next.js static export config
+├── grafana/                        # Automated Grafana provisioning
+│   └── provisioning/
+│       ├── alerting/rules.yaml     # Declarative SLO alert rules
+│       ├── dashboards/             # ClientPilot Overview dashboard JSON
+│       └── datasources/            # Prometheus, Tempo, and Loki datasources
+├── incidents.md                    # Automated SRE Incident post-mortem log
 ├── infra/
-│   └── aws.yml                     # AWS Free-Tier CloudFormation template
+│   └── aws.yml                     # AWS Free-Tier CloudFormation template (dev/prod targets)
+├── observability/                  # Configs for Prometheus, Tempo, Loki, OTel Collector
+├── otel-collector-config.yaml       # OpenTelemetry Collector routing pipeline
 ├── package.json                    # Monorepo build and test scripts
 ├── playwright.config.ts            # E2E test runner configuration
 ├── pm.md                           # Product Manager backlog and grooming notes
@@ -135,12 +151,16 @@ ClientPilot-Inf316-Part2/
 ├── server/                         # Hono backend API source
 │   ├── app.ts                      # Hono app setup and route binding
 │   ├── index.ts                    # Unified production runner
+│   ├── metrics.ts                  # Prometheus metrics registry and instruments
+│   ├── oncall.ts                   # Autonomous AI On-Call Responder & triage engine
 │   ├── routes/                     # REST endpoints (clients, projects, timers, invoices)
 │   ├── store/                      # In-memory and Prisma PostgreSQL repositories
+│   ├── telemetry.ts                # OpenTelemetry SDK and tracing helpers
 │   ├── types.ts                    # Backend TypeScript models
 │   └── utils/                      # Sanitization utilities
 ├── tests/
 │   ├── api.test.ts                 # Vitest unit & integration test suite
+│   ├── observability.test.ts       # Vitest telemetry, metrics & alert webhook tests
 │   └── e2e/                        # Playwright automated browser tests
 └── vitest.config.ts                # Vitest test configuration
 ```

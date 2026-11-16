@@ -70,10 +70,56 @@ ClientPilot enables freelance knowledge workers (developers, designers, consulta
 | E2E Testing | #22 | [e2e-test] Playwright test for Project Management | High | Iteration 7 |
 | E2E Testing | #23 | [e2e-test] Playwright test for Time Tracking | High | Iteration 7 |
 | E2E Testing | #24 | [e2e-test] Playwright test for Invoice Generation | High | Iteration 7 |
+| DevOps / Phase 2 | #26 | [devops] Separate development and production environments | Critical | Iteration 8 |
+| DevOps / Phase 2 | #27 | [devops] Manual CI/CD promotion trigger (dev → prod) | High | Iteration 9 |
+| Observability | #28 | [observability] Instrument backend with OpenTelemetry (metrics, traces, logs) | Critical | Iteration 10 |
+| Observability | #29 | [observability] Define application-specific metrics + Grafana dashboard | High | Iteration 11 |
+| Observability | #30 | [observability] Alert rules on application metrics | High | Iteration 12 |
+| Observability | #31 | [observability] AI agent as on-call responder for alerts | Critical | Iteration 13 |
 
 ---
 
-## 4. PM Grooming Notes for Bugs
+## 4. Phase 2: DevOps & Observability Product Specifications
+
+### Epic 5: Environment Isolation & Progressive Delivery (#26, #27)
+* **Story 5.1 (Dev vs Prod Isolation - #26)**: As DevOps, separate dev and prod container configurations and databases so that development activity and schema migrations never endanger production data.
+  * **Acceptance Criteria**:
+    - `docker-compose.yml` configures dev mode (`clientpilot_dev`, hot reload / live debugging, unconstrained resources).
+    - `docker-compose.prod.yml` overlays prod specs (`clientpilot_prod`, restart: always, CPU/Memory resource constraints, hardened logging).
+    - Dual configuration files `.env.dev` and `.env.prod.example` provided.
+    - CloudFormation parameterizes target environments (`dev` vs `prod`).
+* **Story 5.2 (Manual Release Promotion - #27)**: As a release manager, manually trigger deployment promotion from validated dev builds to production via GitHub Actions with approval gates.
+  * **Acceptance Criteria**:
+    - Workflow dispatch in `.github/workflows/promote.yml` accepts `image_tag` or git SHA.
+    - Protected GitHub Environment `production` requires reviewer approval.
+    - Automatic re-tagging from `dev-<sha>` to `prod-<sha>` with deployment audit logging.
+
+### Epic 6: Full-Stack Observability & Telemetry (#28, #29)
+* **Story 6.1 (OpenTelemetry Core - #28)**: As SRE, collect distributed traces, structured JSON logs, and runtime metrics using OpenTelemetry standards exported via OTLP.
+  * **Acceptance Criteria**:
+    - OpenTelemetry NodeSDK instruments backend lifecycle.
+    - OpenTelemetry Collector routes metrics to Prometheus, traces to Tempo, and logs to Loki.
+    - Contextual trace propagation and manual Prisma query span instrumentation.
+* **Story 6.2 (Domain Metrics & Grafana Dashboard - #29)**: As a product owner, visualize micro-SaaS business and operational KPIs in a unified Grafana dashboard.
+  * **Acceptance Criteria**:
+    - Metrics: `clientpilot_invoices_generated_total`, `clientpilot_time_tracked_hours_total`, `clientpilot_active_timers`, `clientpilot_http_request_duration_seconds`, `clientpilot_pdf_generation_duration_seconds`, `clientpilot_pdf_generation_errors_total`.
+    - Automated dashboard provisioning via `clientpilot-overview.json` with Prometheus, Tempo, and Loki datasources.
+
+### Epic 7: Autonomous Incident Response (#30, #31)
+* **Story 7.1 (SLO Alerting Rules - #30)**: As an on-call engineer, receive automated alerts whenever critical latency, error rates, or business metrics breach thresholds.
+  * **Acceptance Criteria**:
+    - Grafana alert rules defined in YAML: `HighErrorRate` (>5% 5xx errors), `HighLatencyP95` (>1.5s latency), `PdfGenerationErrorsSpike` (>0 errors), `ClientPilotNoData`.
+    - Routed to webhook endpoint `/api/alerts/webhook`.
+* **Story 7.2 (AI On-Call Responder - #31)**: As a site reliability team, dispatch firing alerts to an autonomous AI agent that queries telemetry, forms a root-cause hypothesis, recommends remediation steps, creates an incident GitHub issue, and maintains an incident audit log in `incidents.md`.
+  * **Acceptance Criteria**:
+    - Webhook `/api/alerts/webhook` and `/api/alerts/simulate` triage alerts autonomously.
+    - Generates structured root cause hypothesis and 3 immediate remediation steps.
+    - Autonomous GitHub issue creation with label `observability`.
+    - Appends incident post-mortem analysis to `incidents.md`.
+
+---
+
+## 5. PM Grooming Notes for Bugs
 
 ### Grooming Note for Bug #16: [Bug] Timer API crashes (500) if `project_id` is missing
 * **Severity**: Blocker (produces server crash / 500 internal server error instead of standard client error).

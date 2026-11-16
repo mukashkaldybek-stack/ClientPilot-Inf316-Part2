@@ -7,7 +7,12 @@ Parameters:
   EnvironmentName:
     Type: String
     Default: clientpilot-prod
-    Description: Environment tag identifier
+    AllowedValues:
+      - dev
+      - prod
+      - clientpilot-dev
+      - clientpilot-prod
+    Description: Environment target identifier (dev or prod)
   DBUser:
     Type: String
     Default: postgres

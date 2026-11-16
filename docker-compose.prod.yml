@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  db:
+    environment:
+      POSTGRES_DB: clientpilot_prod
+    restart: always
+    volumes:
+      - pgdata_prod:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+
+  app:
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/clientpilot_prod?schema=public
+      - USE_IN_MEMORY=false
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+
+volumes:
+  pgdata_prod:
