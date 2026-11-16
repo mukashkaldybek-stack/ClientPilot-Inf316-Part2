@@ -18,6 +18,15 @@ initTelemetry();
 
 export const app = new Hono();
 
+// Global Error Handler
+app.onError((err, c) => {
+  console.error('⚠️ Server error captured gracefully:', err);
+  return c.json({
+    error: err.message || 'Internal Server Error',
+    status: 500,
+  }, 500);
+});
+
 // Middlewares
 app.use('*', cors());
 

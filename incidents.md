@@ -84,3 +84,27 @@
   - Restart the invoice generator worker pool if memory threshold exceeded.
 * **Status**: RESOLVED & CLOSED
 ---
+
+## Incident: HighErrorRate
+* **Timestamp**: 2026-11-16T15:04:39.493Z
+* **Severity**: CRITICAL
+* **GitHub Issue**: Simulated local execution
+* **Root-Cause Hypothesis**: HTTP 5xx error rate exceeded 5% threshold over 5m window. Downstream database connection latency or schema validation error.
+* **Remediation Actions Taken**:
+  - Inspect PostgreSQL container health and connection pool saturation.
+  - Check server/routes/timers.ts for unhandled 422 vs 500 status codes.
+  - Review recent deployment commits and verify Prisma schema synchronization.
+* **Status**: RESOLVED & CLOSED
+---
+
+## Incident: PdfGenerationErrorsSpike
+* **Timestamp**: 2026-11-16T15:04:40.220Z
+* **Severity**: CRITICAL
+* **GitHub Issue**: Simulated local execution
+* **Root-Cause Hypothesis**: Spike in PDF / Invoice compilation failures detected. Likely root cause: malformed invoice template tokens or unexpected unicode byte sequence in client company name.
+* **Remediation Actions Taken**:
+  - Validate HTML entity escaping function in server/utils/sanitize.ts.
+  - Check time_entries table for duration anomalies or zero-second logs.
+  - Restart the invoice generator worker pool if memory threshold exceeded.
+* **Status**: RESOLVED & CLOSED
+---

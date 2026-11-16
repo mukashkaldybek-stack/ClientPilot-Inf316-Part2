@@ -1,4 +1,4 @@
-import { trace, context, SpanStatusCode, Tracer } from '@opentelemetry/api';
+import { trace, context, SpanStatusCode, type Tracer } from '@opentelemetry/api';
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { ATTR_SERVICE_NAME, ATTR_SERVICE_VERSION } from '@opentelemetry/semantic-conventions';
