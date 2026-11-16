@@ -77,3 +77,4 @@ jobs:
       - name: Record Promotion Audit Log
         run: |
           echo "Promotion verified: ${{ steps.tags.outputs.dev_image }} promoted to ${{ steps.tags.outputs.prod_image }} by ${{ github.actor }}"
+

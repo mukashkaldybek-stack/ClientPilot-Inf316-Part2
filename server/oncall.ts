@@ -189,3 +189,4 @@ ${data.remediationSteps.map(s => `  - ${s}`).join('\n')}
     console.error('Failed to append to incidents.md:', err);
   }
 }
+

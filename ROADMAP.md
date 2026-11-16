@@ -93,3 +93,4 @@ ClientPilot Phase 2 successfully instituted OpenTelemetry tracing, Prometheus me
 | **Invoice Generation Latency** | < 1,000ms | > 2,000ms | > 5,000ms | Worker concurrency scale-up |
 | **PDF Render Error Rate** | 0.0% | > 0.1% | > 1.0% | Template fallback to plaintext HTML |
 | **Active Timer Sync Lag** | < 1s | > 2s | > 5s | In-memory Redis sync flush |
+

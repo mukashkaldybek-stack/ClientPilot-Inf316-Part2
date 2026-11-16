@@ -91,3 +91,4 @@ export async function getPrometheusMetrics(): Promise<string> {
 export function getPrometheusContentType(): string {
   return register.contentType;
 }
+
